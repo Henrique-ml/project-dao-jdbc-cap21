@@ -9,7 +9,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import db.DB;
 import db.DbException;
@@ -48,8 +51,8 @@ public class SellerDaoJDBC implements SellerDao {
 	@Override
 	public Seller findById(Integer id) {
 		PreparedStatement st = null;
-		ResultSet rs = null; // ResultSet: Apresentar dados em forma de tabela - aponta por padrão para o 0
-								// (não há nenhum objeto)
+		ResultSet rs = null; // ResultSet: Apresentar dados em forma de tabela - aponta por padrão para o 0 (não há nenhum objeto)
+								
 		try {
 			st = conn.prepareStatement(
 					"SELECT seller.*,department.Name as DepName" 
@@ -104,6 +107,57 @@ public class SellerDaoJDBC implements SellerDao {
 	@Override
 	public List<Seller> findAll() {
 		return null;
+	}
+
+	@Override
+	public List<Seller> findByDepartment(Department department) {
+		PreparedStatement st = null;
+		ResultSet rs = null; // ResultSet: Apresentar dados em forma de tabela - aponta por padrão para o 0 (não há nenhum objeto)
+						
+		try {
+			st = conn.prepareStatement(
+					"SELECT seller.*,department.Name as DepName"  
+					+"FROM seller INNER JOIN department"  
+					+"ON seller.DepartmentId = department.Id"  
+					+"WHERE DepartmentId = ?"  
+					+"ORDER BY Name");
+
+			st.setInt(1, department.getId());
+			rs = st.executeQuery();
+
+			List<Seller> list = new ArrayList<>();
+			Map<Integer, Department> map = new HashMap<>();
+			
+			// Testar se retornou da Query algum resultado (já que o rs aponta primeiramente por padrão para o 0)
+			// Se der TRUE, significa que retornou aquele UM ou MAIS registro
+			// Vai percorrer o(s) registro(s)
+			while (rs.next()) {
+				
+				// Pega um objeto no map que já está estava na memória 
+				Department dep = map.get(rs.getInt("DepartmentId"));
+				
+				// Se o dep retornar NULL, instancia-se um Department e o coloca no map com seu Id("DepartmentId") do registro e o Department instanciado
+				if (dep == null) { 
+					dep = instantiateDepartament(rs);
+					
+					// Guardar no map para verificação de existência depois
+					// Guarda esse dep na memória para não instanciar Departments iguais, assim Sellers diferentes apontando para o mesmo Department (MATERIAL DE APOIO) 
+					map.put(rs.getInt("DepartmentId"), dep); 
+				}
+				
+				// Instancia o Seller e aponta para um Department já existente
+				Seller obj = instantiateSeller(rs, dep);
+
+				list.add(obj);
+			}
+			return null;
+		} catch (SQLException e) {
+			throw new DbException(e.getMessage());
+		} finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+			// Não fechar o Connection para utilizar outros métodos - fechar no Program
+		}
 	}
 
 }
