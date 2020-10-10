@@ -2,6 +2,7 @@ package application;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Scanner;
 
 import model.dao.DaoFactory;
 import model.dao.SellerDao;
@@ -11,6 +12,7 @@ import model.entities.Seller;
 public class Program {
 
 	public static void main(String[] args) {
+		Scanner sc = new Scanner(System.in);
 
 		// Forma de INJEÇÃO DE DEPEDÊNCIA sem explicitar a implementação
 		// Programa não conhece a implementação, somente a interface
@@ -42,5 +44,13 @@ public class Program {
 		seller.setEmail("martha@gamil.com");
 		sellerDao.update(seller); // Tranforma em dados de Banco de Dados Relacional
 		System.out.println("Update completed!");
+		
+		System.out.println("\n==== TEST 6: seller delete====");
+		System.out.print("Enter id for delete test: ");
+		int id = sc.nextInt();
+		sellerDao.deleteById(id);
+		System.out.println("Delete completed!");
+		
+		sc.close();	
 	}
 }
